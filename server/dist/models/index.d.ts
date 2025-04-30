@@ -1,0 +1,11 @@
+import User from './User';
+import Challenge from './Challenge';
+import ChallengeEntry from './ChallengeEntry';
+import Trade from './Trade';
+import WalletTransaction from './WalletTransaction';
+import Notification from './Notification';
+import CryptoWallet from './CryptoWallet';
+import CryptoPayment from './CryptoPayment';
+import sequelize from '../config/database';
+export { sequelize, User, Challenge, ChallengeEntry, Trade, WalletTransaction, Notification, CryptoWallet, CryptoPayment };
+export declare const initDatabase: (sync?: boolean) => Promise<void>;

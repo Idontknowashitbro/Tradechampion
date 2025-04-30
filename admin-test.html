@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Access Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .error {
+            color: red;
+        }
+        .success {
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Access Test</h1>
+
+    <h2>Current User Data</h2>
+    <pre id="currentData">Loading...</pre>
+
+    <button id="clearStorage">Clear Local Storage</button>
+    <button id="checkAdmin">Check Admin Status</button>
+    <button id="loginAdmin">Login as Admin</button>
+    <button id="updateRole">Update Role to Admin</button>
+
+    <div class="result" id="result"></div>
+
+    <script>
+        // Display current user data
+        function displayCurrentData() {
+            const userData = localStorage.getItem('user');
+            const tokenData = localStorage.getItem('token');
+
+            document.getElementById('currentData').textContent =
+                `User: ${userData ? JSON.stringify(JSON.parse(userData), null, 2) : 'Not found'}\n\n` +
+                `Token: ${tokenData ? tokenData.substring(0, 20) + '...' : 'Not found'}`;
+        }
+
+        // Clear local storage
+        document.getElementById('clearStorage').addEventListener('click', function() {
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            document.getElementById('result').textContent = 'Local storage cleared';
+            document.getElementById('result').className = 'result success';
+            displayCurrentData();
+        });
+
+        // Check admin status
+        document.getElementById('checkAdmin').addEventListener('click', async function() {
+            try {
+                const token = localStorage.getItem('token');
+
+                if (!token) {
+                    document.getElementById('result').textContent = 'No token found in local storage';
+                    document.getElementById('result').className = 'result error';
+                    return;
+                }
+
+                const response = await fetch('http://localhost:5003/api/auth/check-admin', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                document.getElementById('result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('result').className = 'result success';
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                document.getElementById('result').className = 'result error';
+            }
+        });
+
+        // Login as admin
+        document.getElementById('loginAdmin').addEventListener('click', async function() {
+            try {
+                const response = await fetch('http://localhost:5003/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        email: 'admin@example.com',
+                        password: 'password123'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.token) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
+
+                    document.getElementById('result').textContent = 'Login successful';
+                    document.getElementById('result').className = 'result success';
+                    displayCurrentData();
+                } else {
+                    document.getElementById('result').textContent = 'Login failed: ' + data.message;
+                    document.getElementById('result').className = 'result error';
+                }
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                document.getElementById('result').className = 'result error';
+            }
+        });
+
+        // Update role to admin
+        document.getElementById('updateRole').addEventListener('click', function() {
+            try {
+                const userData = localStorage.getItem('user');
+
+                if (!userData) {
+                    document.getElementById('result').textContent = 'No user data found in local storage';
+                    document.getElementById('result').className = 'result error';
+                    return;
+                }
+
+                const user = JSON.parse(userData);
+                user.role = 'admin';
+
+                localStorage.setItem('user', JSON.stringify(user));
+
+                document.getElementById('result').textContent = 'User role updated to admin';
+                document.getElementById('result').className = 'result success';
+                displayCurrentData();
+            } catch (error) {
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+                document.getElementById('result').className = 'result error';
+            }
+        });
+
+        // Initial display
+        displayCurrentData();
+    </script>
+</body>
+</html>
